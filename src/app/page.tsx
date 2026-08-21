@@ -19,8 +19,12 @@ export default function Home() {
   useEffect(() => {
     const onHash = () => setSection((location.hash.replace('#','') as Section) || 'home')
     onHash(); window.addEventListener('hashchange', onHash)
-    if (supabase) supabase.auth.getUser().then(({data}) => setUser(data.user ?? null))
-    return () => window.removeEventListener('hashchange', onHash)
+    let subscription: { unsubscribe: () => void } | undefined
+    if (supabase) {
+      supabase.auth.getUser().then(({data}) => setUser(data.user ?? null))
+      subscription = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null)).data.subscription
+    }
+    return () => { window.removeEventListener('hashchange', onHash); subscription?.unsubscribe() }
   }, [])
 
   function go(next: Section) { location.hash = next }
@@ -28,7 +32,7 @@ export default function Home() {
   useEffect(() => {
     if (!supabase || !['league','fixtures','tournaments','rankings','notifications','profile'].includes(section)) return
     let active = true
-    setLoading(true); setMessage('')
+    setLoading(true); setMessage(''); setRows([])
     ;(async () => {
       if (section === 'profile' || section === 'notifications') {
         const {data:{user:u}} = await supabase.auth.getUser(); if (!active) return
@@ -61,6 +65,6 @@ export default function Home() {
     {section==='login' && <section className="hero"><h1>Sign in</h1><form className="card" onSubmit={login}><input type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} required/><input type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} required/><button className="button" disabled={loading}>{loading?'Signing in…':'Sign in'}</button><p className="muted">{message}</p></form></section>}
     {section==='signup' && <section className="hero"><h1>Create account</h1><form className="card" onSubmit={signup}><input placeholder="Username" value={username} onChange={e=>setUsername(e.target.value)} required minLength={3}/><select value={game} onChange={e=>setGame(e.target.value)}><option>eFootball</option><option>DLS</option></select><input placeholder="Country" value={country} onChange={e=>setCountry(e.target.value)} required/><input type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} required/><input type="password" placeholder="Password (6+ characters)" value={password} onChange={e=>setPassword(e.target.value)} minLength={6} required/><button className="button" disabled={loading}>{loading?'Creating…':'Create account'}</button><p className="muted">{message}</p></form></section>}
     {section==='profile' && <section className="hero"><h1>👤 Profile</h1>{!user?<article className="card"><p className="muted">Sign in to load your player profile.</p><button className="button" onClick={()=>go('login')}>Sign in</button></article>:<div className="grid"><article className="card"><div className="badge">🎮 {profile?.game_name??player?.game_type??'Game'}</div><h2>{profile?.username??player?.username??user.email}</h2><p className="muted">{user.email}</p><p className="muted">Player ID: {player?.id??'Pending'}</p></article><article className="card"><h2>Progress</h2><p className="muted">XP: {player?.xp??0}</p><p className="muted">Level: {player?.level??1}</p><p className="muted">Rating: {player?.rating??0}</p></article></div>}</section>}
-    {['league','fixtures','tournaments','rankings','notifications'].includes(section) && <section className="hero"><h1>{nav.find(x=>x[0]===section)?.[1]} {nav.find(x=>x[0]===section)?.[2]}</h1>{loading&&<article className="card"><h2>Loading…</h2></article>}{message&&<article className="card"><p className="muted">{message}</p></article>}{!loading&&!message&&<div className="grid">{rows.map((r:any,i)=><article className="card" key={r.id??i}><div className="badge">{section==='rankings'?'#'+(r.global_rank??i+1):section==='notifications'?'🔔 '+(r.notification_type??'Update'):'LIVE'}</div><h2>{r.tournament_name??r.league_name??r.title??r.player_name??(section==='rankings'?'Player '+r.player_id:section==='fixtures'?'Match':'GreyVerse '+section)}</h2><p className="muted">{r.message??r.total_points!=null?`${r.total_points} points · Rating ${r.rating??0}`:r.status??r.game_type??'GreyVerse competition'}</p></article>)}{!rows.length&&<article className="card"><h2>Nothing here yet</h2><p className="muted">The GreyVerse database has no records for this section yet.</p></article>}</div>}</section>}
+    {['league','fixtures','tournaments','rankings','notifications'].includes(section) && <section className="hero"><h1>{nav.find(x=>x[0]===section)?.[1]} {nav.find(x=>x[0]===section)?.[2]}</h1>{loading&&<article className="card"><h2>Loading…</h2></article>}{message&&<article className="card"><p className="muted">{message}</p></article>}{!loading&&!message&&<div className="grid">{rows.map((r:any,i:number)=>{const title=r.tournament_name??r.league_name??r.title??r.player_name??(section==='rankings'?'Player '+r.player_id:section==='fixtures'?'Match':'GreyVerse '+section);const detail=r.message??(r.total_points!=null?`${r.total_points} points · Rating ${r.rating??0}`:(r.status??r.game_type??'GreyVerse competition'));return <article className="card" key={r.id??i}><div className="badge">{section==='rankings'?'#'+(r.global_rank??i+1):section==='notifications'?'🔔 '+(r.notification_type??'Update'):'LIVE'}</div><h2>{title}</h2><p className="muted">{detail}</p></article>})}{!rows.length&&<article className="card"><h2>Nothing here yet</h2><p className="muted">The GreyVerse database has no records for this section yet.</p></article>}</div>}</section>}
   </main>
 }
