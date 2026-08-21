@@ -1,50 +1,29 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { SUPABASE_URL } from '@/lib/supabase'
 
 type Status = 'checking' | 'online' | 'offline'
 
-async function checkBackend(): Promise<boolean> {
-  if (!navigator.onLine) return false
-
-  try {
-    const response = await fetch(`${SUPABASE_URL}/auth/v1/health`, {
-      method: 'GET',
-      cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache' },
-    })
-    return response.ok
-  } catch {
-    return false
-  }
+function hasInternetConnection() {
+  return typeof navigator !== 'undefined' && navigator.onLine
 }
 
 export default function OnlineGate({ children }: { children: React.ReactNode }) {
-  const [status, setStatus] = useState<Status>('checking')
+  const [status, setStatus] = useState<Status>(() => hasInternetConnection() ? 'online' : 'offline')
 
-  const verify = useCallback(async () => {
-    setStatus('checking')
-    setStatus((await checkBackend()) ? 'online' : 'offline')
+  const verify = useCallback(() => {
+    setStatus(hasInternetConnection() ? 'online' : 'offline')
   }, [])
 
   useEffect(() => {
-    let mounted = true
-
-    const run = async () => {
-      const online = await checkBackend()
-      if (mounted) setStatus(online ? 'online' : 'offline')
-    }
-
-    const handleOnline = () => void verify()
+    const handleOnline = () => setStatus('online')
     const handleOffline = () => setStatus('offline')
 
-    void run()
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
+    verify()
 
     return () => {
-      mounted = false
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
     }
@@ -60,8 +39,8 @@ export default function OnlineGate({ children }: { children: React.ReactNode }) 
         <p style={{ margin: '12px 0 22px', color: '#a1a1aa', lineHeight: 1.5 }}>
           GreyVerse is an online-only gaming platform. Connect to the internet to use the app and reach the live GreyVerse servers.
         </p>
-        <button onClick={() => void verify()} style={{ border: 0, borderRadius: 12, padding: '12px 18px', background: '#fff', color: '#09090b', fontWeight: 700, cursor: 'pointer' }}>
-          {status === 'checking' ? 'Checking connection…' : 'Try again'}
+        <button onClick={verify} style={{ border: 0, borderRadius: 12, padding: '12px 18px', background: '#fff', color: '#09090b', fontWeight: 700, cursor: 'pointer' }}>
+          Try again
         </button>
       </section>
     </main>
