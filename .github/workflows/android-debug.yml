@@ -1,26 +1,34 @@
 name: GreyVerse Android Debug APK
+
 on:
   workflow_dispatch:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: {node-version: 20}
+        with:
+          node-version: 20
       - run: npm install
       - run: npm run build
       - run: test -f out/index.html
-      - run: npm install @capacitor/core @capacitor/cli @capacitor/android
-      - run: npx cap add android --no-sync
+      - run: npx cap add android
       - run: npx cap sync android
       - uses: actions/setup-java@v4
-        with: {distribution: temurin, java-version: 21}
+        with:
+          distribution: temurin
+          java-version: 21
       - name: Build debug APK
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
+      - name: Verify APK
+        run: test -s android/app/build/outputs/apk/debug/app-debug.apk
       - uses: actions/upload-artifact@v4
         with:
           name: greyverse-debug-apk
