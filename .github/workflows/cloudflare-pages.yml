@@ -13,30 +13,65 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  build:
+    name: Build static site
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
-
       - name: Install dependencies
         run: npm ci
-
       - name: Build GreyVerse
         run: npm run build
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      - name: Verify static export
+        run: test -s out/index.html
+      - name: Upload static export
+        uses: actions/upload-artifact@v4
+        with:
+          name: greyverse-static-export
+          path: out
+          if-no-files-found: error
 
+  deploy:
+    name: Deploy to Cloudflare Pages
+    needs: build
+    if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download static export
+        uses: actions/download-artifact@v4
+        with:
+          name: greyverse-static-export
+          path: out
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy out --project-name=greyverse --branch=main
+
+  deployment-status:
+    name: Deployment configuration status
+    needs: [build, deploy]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report configuration state
+        run: |
+          if [ "${{ needs.deploy.result }}" = "skipped" ]; then
+            echo "Cloudflare deployment skipped because CLOUDFLARE_API_TOKEN and/or CLOUDFLARE_ACCOUNT_ID is not configured. The static export was built and uploaded successfully."
+          elif [ "${{ needs.deploy.result }}" != "success" ]; then
+            exit 1
+          fi

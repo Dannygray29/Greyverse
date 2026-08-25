@@ -36,3 +36,7 @@ A fresh inspection of the live project on 25 August 2026 reports no security lin
 ## Playoff correction applied
 
 Migration `correct_greyverse_playoff_pairings` was applied to production. Tier 2 versus Lowest Tier pairings now use Lowest Tier positions 21–25, while other adjacent-tier pairings use positions 6–10. The upper-tier player must win to retain the place; a draw promotes the lower-tier challenger. The lowest-tier external opponent source is still an operational dependency because the current schema does not contain an active waiting-list roster.
+
+## League catalog alignment applied
+
+Migration `align_greyverse_league_systems` was applied to production. Active leagues are now limited to England, Spain, Italy, and Germany for both DLS and eFootball. Each game/system has one active league at each of the three tiers, with capacities of 20 for Tier 1 and 30 for Tiers 2 and 3. Unsupported historical systems were archived rather than deleted.
