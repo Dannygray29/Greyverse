@@ -24,3 +24,7 @@ Security function advisory: https://supabase.com/docs/guides/database/database-l
 Password protection: https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
 RLS initialization plan: https://supabase.com/docs/guides/database/database-linter?lint=0003_auth_rls_initplan
 Unused index advisory: https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index
+
+## Free-plan password workaround
+
+The signup page now enforces a local password policy requiring at least 12 characters, uppercase and lowercase letters, a number, a symbol, and no username/email fragment or listed common password. This improves password hygiene on the free plan but does not replace Supabase's HaveIBeenPwned-based leaked-password protection, so the Auth advisory remains expected until the project is upgraded.
