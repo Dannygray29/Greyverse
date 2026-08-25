@@ -28,3 +28,7 @@ Unused index advisory: https://supabase.com/docs/guides/database/database-linter
 ## Free-plan password workaround
 
 The signup page now enforces a local password policy requiring at least 12 characters, uppercase and lowercase letters, a number, a symbol, and no username/email fragment or listed common password. This improves password hygiene on the free plan but does not replace Supabase's HaveIBeenPwned-based leaked-password protection, so the Auth advisory remains expected until the project is upgraded.
+
+## RLS advisor follow-up
+
+A fresh inspection confirms that the `public.enquiries` administrator policies use statement-level `select` wrappers around `auth.jwt()`. The Supabase performance advisor continues to report the initialization-plan warning for these policies, so the finding appears stale or overly broad relative to the deployed definitions. No destructive policy rewrite was applied without a reproducible regression test. The remaining unused-index notices are informational and should be reviewed against production query statistics before removal.
