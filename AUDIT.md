@@ -9,12 +9,12 @@ This audit reviews the current `greyverse` repository against the agreed GreyVer
 | Area | Status | Finding |
 |---|---|---|
 | Supabase client | Present | `src/lib/supabase.ts` uses `@supabase/supabase-js` and environment-backed public credentials. |
-| DLS/eFootball separation | Partial | The UI exposes a game selector, but the database must enforce game-scoped authorization and unique profiles server-side. |
+| DLS/eFootball separation | Improved | The profile route now loads all player records for the authenticated account and switches the active DLS/eFootball record in-session; live Supabase RLS remains the authoritative isolation boundary. |
 | Country signup | Fixed | Signup now uses a standardized country dropdown shared from `src/lib/countries.ts`. |
-| Shared account switching | Improved | Profile now provides an in-session DLS/eFootball switcher without logout. |
+| Shared account switching | Fixed in UI | Profile now supports multiple game-specific player rows per account and switches between them without logout; a missing game row is surfaced instead of silently showing another game. |
 | Server authority | Gap | The app is a static export and currently performs provisioning and mutations directly from the browser. Critical operations should move to Supabase RPC functions with RLS and transactional logic. |
 | League placement | Gap | The UI communicates automatic placement, but server-side random system assignment is not implemented in this repository. |
-| Promotion/playoffs | Gap | Season rules are not encoded as database functions or an admin workflow. |
+| Promotion/playoffs | Implemented with follow-up | Live Supabase contains season processing and playoff RPCs. Migration `20260825192000_correct_greyverse_playoff_pairings.sql` corrected the lower-tier challenger positions and retained the draw-promotes-lower rule. Lowest-tier external opponent sourcing and full season-transition integration tests remain operational follow-ups. |
 | Evidence | Partial | Result submission accepts an evidence URL; a private Supabase Storage upload flow is still recommended. |
 | Production deployment | Present | Cloudflare Pages deploys the static `out/` artifact and Capacitor consumes the same export. |
 
@@ -39,4 +39,4 @@ The Supabase project should enforce the following independently of the client UI
 
 ## Verification
 
-The production build completes successfully with `npm run build`. The repository is suitable for continued development, but it should not be considered competition-production-ready until the Supabase schema, RLS policies, RPC functions, evidence storage, and season-transition jobs are implemented and tested.
+The production build completes successfully with `npm run build`. The live Supabase security advisor currently returns no lints, and all inspected public tables report RLS enabled. The platform remains conditionally ready rather than fully competition-production-ready until authenticated match, dispute, game-isolation, and season-transition tests are run with representative accounts and the lowest-tier playoff opponent roster is operationally supplied.

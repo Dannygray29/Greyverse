@@ -12,7 +12,7 @@ The project has extensive migration history through 2026-08-22, including league
 
 ## Security advisories
 
-The three privileged competition RPC warnings were remediated by migration `revoke_authenticated_privileged_competition_rpcs`: authenticated users no longer have `EXECUTE` permission on `create_relegation_playoff(...)`, `prepare_fixture_match(...)`, or `resolve_relegation_playoff(...)`; trusted `service_role` execution remains available for controlled jobs. One warning remains: leaked password protection is disabled and must be enabled in Supabase Auth project settings.
+The live Supabase security advisor currently returns no lints. The three privileged competition RPC warnings were remediated by migration `revoke_authenticated_privileged_competition_rpcs`: authenticated users no longer have `EXECUTE` permission on `create_relegation_playoff(...)`, `prepare_fixture_match(...)`, or `resolve_relegation_playoff(...)`; trusted `service_role` execution remains available for controlled jobs. Leaked-password protection was also enabled by the live migration history, while the signup page retains a 12-character local policy as an additional free-plan safeguard.
 
 ## Performance advisories
 
@@ -27,8 +27,12 @@ Unused index advisory: https://supabase.com/docs/guides/database/database-linter
 
 ## Free-plan password workaround
 
-The signup page now enforces a local password policy requiring at least 12 characters, uppercase and lowercase letters, a number, a symbol, and no username/email fragment or listed common password. This improves password hygiene on the free plan but does not replace Supabase's HaveIBeenPwned-based leaked-password protection, so the Auth advisory remains expected until the project is upgraded.
+The signup page now enforces a local password policy requiring at least 12 characters, uppercase and lowercase letters, a number, a symbol, and no username/email fragment or listed common password. This improves password hygiene on the free plan and complements Supabase's HaveIBeenPwned-based leaked-password protection, which is enabled in the live migration history.
 
 ## RLS advisor follow-up
 
-A fresh inspection confirms that the `public.enquiries` administrator policies use statement-level `select` wrappers around `auth.jwt()`. The Supabase performance advisor continues to report the initialization-plan warning for these policies, so the finding appears stale or overly broad relative to the deployed definitions. No destructive policy rewrite was applied without a reproducible regression test. The remaining unused-index notices are informational and should be reviewed against production query statistics before removal.
+A fresh inspection of the live project on 25 August 2026 reports no security lints. All inspected public tables report RLS enabled. The remaining operational verification is behavioral: authenticated tests must prove that DLS and eFootball records cannot cross-read or cross-mutate, and that match, evidence, dispute, wallet, and seasonal RPC paths reject unauthorized access. No destructive policy rewrite was applied without a reproducible regression test.
+
+## Playoff correction applied
+
+Migration `correct_greyverse_playoff_pairings` was applied to production. Tier 2 versus Lowest Tier pairings now use Lowest Tier positions 21–25, while other adjacent-tier pairings use positions 6–10. The upper-tier player must win to retain the place; a draw promotes the lower-tier challenger. The lowest-tier external opponent source is still an operational dependency because the current schema does not contain an active waiting-list roster.
