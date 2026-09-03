@@ -49,7 +49,7 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
       - name: Download static export
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: greyverse-static-export
           path: out
