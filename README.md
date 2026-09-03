@@ -34,7 +34,7 @@ The **Grey Champions League** is a separate competition beginning from Season 3 
 ```text
 ┌──────────────────────────────┐
 │ Next.js 16 + React 19        │
-│ Static web client            │
+│ Static web client             │
 └──────────────┬───────────────┘
                │
                ▼
@@ -118,7 +118,6 @@ These limitations are intentional documentation of the current state, not hidden
 
 - [`AUDIT.md`](./AUDIT.md) — repository architecture, findings and release gates
 - [`SUPABASE_AUDIT.md`](./SUPABASE_AUDIT.md) — database/security audit notes
-- [`SECURITY.md`](./SECURITY.md) — security reporting and handling guidance, if present
 
 ## Attribution and project context
 
