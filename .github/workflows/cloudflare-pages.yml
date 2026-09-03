@@ -34,7 +34,7 @@ jobs:
       - name: Verify static export
         run: test -s out/index.html
       - name: Upload static export
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: greyverse-static-export
           path: out
