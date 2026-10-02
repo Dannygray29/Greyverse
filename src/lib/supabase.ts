@@ -5,18 +5,17 @@ const envPublishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim
 const envAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim()
 const key = envPublishableKey || envAnonKey
 
-if (!envUrl || !key) {
-  throw new Error(
-    'GreyVerse requires NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (or NEXT_PUBLIC_SUPABASE_ANON_KEY).'
-  )
-}
+export const SUPABASE_URL = envUrl || ''
 
-export const SUPABASE_URL = envUrl
-
-export const supabase = createClient(SUPABASE_URL, key, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: false,
-  },
-})
+// Keep the static site buildable when deployment secrets are not configured.
+// Authenticated/data features already guard against a missing client; production
+// use still requires the public Supabase URL and publishable/anon key.
+export const supabase = envUrl && key
+  ? createClient(envUrl, key, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: false,
+      },
+    })
+  : null
